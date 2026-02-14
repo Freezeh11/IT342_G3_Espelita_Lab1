@@ -35,6 +35,6 @@
    npm run dev
 
 ## List of API Endpoints
-* **aauth/register**
+* **auth/register**
 * **auth/login**
 * **user/me**
