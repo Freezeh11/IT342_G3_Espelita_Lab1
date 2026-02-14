@@ -1,4 +1,4 @@
-# IT342_G3_Espelita_Lab1 - ScoreSync
+# StandUp Sync - Lite
 
 ## Project Description
 **ScoreSync** is a web-based application designed for efficient data management and user authentication. Developed as part of a capstone project, it features a robust full-stack architecture focusing on secure user registration, hashed credential storage, and protected dashboard access.
