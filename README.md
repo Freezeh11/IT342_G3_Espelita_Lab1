@@ -23,3 +23,6 @@
 1. **Navigate to the backend folder:**
    ```bash
    cd backend
+2. **Run Application **
+   ```bash
+   run EspelitaApplication.java
