@@ -23,6 +23,20 @@
 1. **Navigate to the backend folder:**
    ```bash
    cd backend
-2. **Run Application **
+2. **Run Application**
    ```bash
    run EspelitaApplication.java
+   
+## Steps to Run Frontend
+
+1. **Navigate to the frontend folder:**
+   ```bash
+   cd web
+2. **Start Development Server**
+   ```bash
+   npm run dev
+
+## List of API Endpoints
+* **aauth/register**
+* * **auth/login**
+* * **user/me**
