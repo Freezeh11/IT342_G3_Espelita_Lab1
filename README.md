@@ -6,15 +6,13 @@
 ## Technologies Used
 * **Frontend:** React.js (Vite), React Router, Axios.
 * **Backend:** Spring Boot 4.0.2, Spring Security, Spring Data JPA.
-* **Database:** H2 In-Memory Database (for development).
 * **Security:** BCrypt Password Encoding.
-* **Build Tools:** Maven (Backend), NPM (Frontend).
 
 ---
 
 ## Project Structure
-* `/backend` - Spring Boot REST API
-* `/web` - React.js Frontend
+* `/backend` - Spring Boot 
+* `/web` - React.js
 
 ---
 
@@ -38,5 +36,5 @@
 
 ## List of API Endpoints
 * **aauth/register**
-* * **auth/login**
-* * **user/me**
+* **auth/login**
+* **user/me**
