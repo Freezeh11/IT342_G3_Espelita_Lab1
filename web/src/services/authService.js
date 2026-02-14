@@ -1,28 +1,26 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://localhost:8080/api/auth/';
 
-export const register = (username, email, password) => {
-    return axios.post(`${API_URL}/auth/register`, { username, email, password });
-};
-
-export const login = (username, password) => {
-    // We use Basic Auth for Session 1. This encodes credentials to Base64.
-    const token = btoa(`${username}:${password}`);
-    localStorage.setItem('userToken', token); // Store for protected routes
-    return axios.post(`${API_URL}/auth/login`, {}, {
-        headers: { 'Authorization': `Basic ${token}` }
+export const register = async (username, email, password) => {
+    return axios.post(API_URL + 'register', {
+        username,
+        email,
+        password
     });
 };
 
-export const getMe = () => {
-    const token = localStorage.getItem('userToken');
-    return axios.get(`${API_URL}/user/me`, {
-        headers: { 'Authorization': `Basic ${token}` }
+export const login = async (username, password) => {
+    // For Basic Auth, we don't necessarily need a post login if we just use the header
+    // But to match the user's flow or if we implemented a real login endpoint:
+    return axios.post(API_URL + 'login', {
+        username,
+        password
     });
 };
 
-export const logout = () => {
-    localStorage.removeItem('userToken');
-    window.location.href = '/login';
+export const getCurrentUser = async (token) => {
+    return axios.get(API_URL.replace('auth/', 'user/') + 'me', {
+        headers: { 'Authorization': token }
+    });
 };
