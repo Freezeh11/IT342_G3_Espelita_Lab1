@@ -4,7 +4,7 @@
 **StandUp Sync - Lite** is a web-based application designed for efficient data management and user authentication. Developed as part of a capstone project, it features a robust full-stack architecture focusing on secure user registration, hashed credential storage, and protected dashboard access.
 
 ## Technologies Used
-* **Frontend:** React.js (Vite), React Router, Axios.
+* **Frontend:** React.js (Vite), React Router.
 * **Backend:** Spring Boot 4.0.2, Spring Security, Spring Data JPA.
 * **Security:** BCrypt Password Encoding.
 
