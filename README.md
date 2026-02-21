@@ -25,9 +25,9 @@
    ```bash
    run EspelitaApplication.java
    
-## Steps to Run Frontend
+## Steps to Run Web
 
-1. **Navigate to the frontend folder:**
+1. **Navigate to the Web folder:**
    ```bash
    cd web
 2. **Start Development Server**
