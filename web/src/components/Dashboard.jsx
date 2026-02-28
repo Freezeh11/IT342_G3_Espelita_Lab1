@@ -1,10 +1,26 @@
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '../services/authService';
+import { getTasks } from '../services/taskService';
+import { getProjects, createProject } from '../services/projectService';
 import { useNavigate } from 'react-router-dom';
+import { CreateProjectModal } from './CreateProjectModal';
+import { ProjectCard } from './ProjectCard';
+import '../css/dashboard.css';
+
+const DropdownMenu = ({ isDropdownOpen, navigate, handleLogout }) => (
+    <ul className={`dashboard__dropdown ${isDropdownOpen ? 'dashboard__dropdown--visible' : 'dashboard__dropdown--hidden'}`}>
+        <li><button className="dashboard__dropdown-item" onClick={() => navigate('/profile')}>Profile Settings</button></li>
+        <li><button className="dashboard__dropdown-item dashboard__dropdown-item--danger" onClick={handleLogout}>Logout</button></li>
+    </ul>
+);
 
 const Dashboard = () => {
+
     const [user, setUser] = useState(null);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [projects, setProjects] = useState([]);
+    const [taskStats, setTaskStats] = useState({});
+    const [showCreateProject, setShowCreateProject] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -15,10 +31,36 @@ const Dashboard = () => {
         }
 
         getCurrentUser(auth)
-            .then(res => setUser(res.data))
-            .catch(() => {
-                localStorage.removeItem('auth');
-                navigate('/login');
+            .then(res => {
+                const u = res.data;
+                setUser(u);
+
+                getProjects()
+                    .then(res => setProjects(res.data))
+                    .catch(err => console.warn('Could not load projects:', err));
+
+                getTasks()
+                    .then(res => {
+                        const tasks = res.data;
+                        const newStats = {};
+                        tasks.forEach(t => {
+                            if (!newStats[t.projectId]) {
+                                newStats[t.projectId] = { inProgress: 0, blocker: 0, done: 0 };
+                            }
+                            if (t.status === 'inProgress') newStats[t.projectId].inProgress++;
+                            else if (t.status === 'blocker') newStats[t.projectId].blocker++;
+                            else if (t.status === 'done') newStats[t.projectId].done++;
+                        });
+                        setTaskStats(newStats);
+                    })
+                    .catch(err => console.warn('Could not load task stats:', err));
+            })
+            .catch(err => {
+                const status = err.response?.status;
+                if (!status || status === 401 || status === 403) {
+                    localStorage.removeItem('auth');
+                    navigate('/login');
+                }
             });
     }, [navigate]);
 
@@ -28,136 +70,66 @@ const Dashboard = () => {
         navigate('/login');
     };
 
-    const styles = {
-        pageWrapper: {
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'radial-gradient(circle at top right, #130a24 0%, #05010d 100%)',
-            color: '#ffffff',
-            fontFamily: "'Inter', sans-serif",
-            overflowX: 'hidden',
-        },
-        navbar: {
-            height: '70px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 40px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            backgroundColor: 'rgba(5, 1, 13, 0.5)',
-            backdropFilter: 'blur(10px)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 1000,
-        },
-        logo: {
-            fontSize: '22px',
-            fontWeight: '800',
-            letterSpacing: '-0.02em',
-        },
-        purpleText: {
-            color: '#9d80ff',
-        },
-        profileArea: {
-            position: 'relative',
-        },
-        profileButton: {
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            padding: '8px 16px',
-            borderRadius: '100px',
-            cursor: 'pointer',
-            color: 'white',
-            fontWeight: '500',
-        },
-        dropdown: {
-            position: 'absolute',
-            top: '50px',
-            right: '0',
-            width: '180px',
-            backgroundColor: '#0d0a1a',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-            overflow: 'hidden',
-            display: isDropdownOpen ? 'block' : 'none',
-        },
-        dropdownItem: {
-            padding: '12px 16px',
-            fontSize: '14px',
-            cursor: 'pointer',
-            transition: 'background 0.2s',
-            textAlign: 'left',
-            color: '#8a8891',
-        },
-        mainContent: {
-            padding: '60px 40px',
-            maxWidth: '1000px',
-            margin: '0 auto',
-        },
-        card: {
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '24px',
-            padding: '40px',
-            backdropFilter: 'blur(12px)',
+    const handleCreateProject = async (name) => {
+        try {
+            const res = await createProject({ name });
+            setProjects(prev => [...prev, res.data]);
+        } catch (err) {
+            console.error('Failed to create project', err);
         }
     };
 
-    if (!user) return <div style={styles.pageWrapper}><p style={{padding: '40px'}}>Scanning the cosmos...</p></div>;
+    if (!user) return <div className="dashboard__wrapper"><p className="dashboard__loading">Scanning the cosmos...</p></div>;
 
     return (
-        <div style={styles.pageWrapper}>
-            <nav style={styles.navbar}>
-                <div style={styles.logo}>
-                    StandUp<span style={styles.purpleText}>-Sync</span>
-                </div>
-                
-                <div style={styles.profileArea}>
-                    <button 
-                        style={styles.profileButton} 
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    >
-                        <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#9d80ff', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000'}}>
-                            {user.username.charAt(0).toUpperCase()}
-                        </div>
+        <div className="dashboard__wrapper">
+            {showCreateProject && (
+                <CreateProjectModal
+                    onClose={() => setShowCreateProject(false)}
+                    onCreate={handleCreateProject}
+                />
+            )}
+            <nav className="dashboard__navbar">
+                <div className="dashboard__logo">StandUp<span className="dashboard__logo-highlight">-Sync</span></div>
+                <div className="dashboard__profile-area">
+                    <button className="dashboard__profile-btn" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                        {(() => {
+                            const pic = localStorage.getItem('profilePic'); return pic
+                                ? <img src={pic} alt="avatar" className="dashboard__avatar-img" />
+                                : <div className="dashboard__avatar-circle">{user.username.charAt(0).toUpperCase()}</div>;
+                        })()}
                         {user.username}
                     </button>
-
-                    <div style={styles.dropdown}>
-                        <div style={styles.dropdownItem} onClick={() => navigate('/profile')}>Profile Settings</div>
-                        <div 
-                            style={{...styles.dropdownItem, color: '#ff5959', borderTop: '1px solid rgba(255, 255, 255, 0.05)'}} 
-                            onClick={handleLogout}
-                        >
-                            Logout
-                        </div>
-                    </div>
+                    <DropdownMenu isDropdownOpen={isDropdownOpen} navigate={navigate} handleLogout={handleLogout} />
                 </div>
             </nav>
 
-            <main style={styles.mainContent}>
-                <div style={styles.card}>
-                    <h2 style={{fontSize: '32px', marginBottom: '20px'}}>Dashboard</h2>
-                    <p style={{color: '#8a8891', marginBottom: '40px'}}>Welcome to the dashboard!</p>
-                    
-                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px'}}>
-                        <div style={{padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)'}}>
-                            <span style={{fontSize: '12px', color: '#9d80ff', fontWeight: 'bold', textTransform: 'uppercase'}}>Current Role</span>
-                            <div style={{fontSize: '20px', marginTop: '5px'}}>{user.role}</div>
+            <main className="dashboard__main">
+                <section className="dashboard__section">
+                    <header className="dashboard__section-header">
+                        <h2 className="dashboard__section-title">Dashboard</h2>
+                        <button className="dashboard__add-btn" onClick={() => setShowCreateProject(true)}>
+                            <span className="dashboard__add-icon">+</span>
+                            <span className="dashboard__add-text">ADD PROJECT</span>
+                        </button>
+                    </header>
+
+                    {projects.length === 0 ? (
+                        <div className="dashboard__empty-state">
+                            No projects yet. Click <span className="dashboard__empty-state-link" onClick={() => setShowCreateProject(true)}>+ ADD PROJECT</span> to get started.
                         </div>
-                        <div style={{padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)'}}>
-                            <span style={{fontSize: '12px', color: '#9d80ff', fontWeight: 'bold', textTransform: 'uppercase'}}>Identity ID</span>
-                            <div style={{fontSize: '20px', marginTop: '5px'}}>#{user.id}</div>
+                    ) : (
+                        <div className="dashboard__grid">
+                            {projects.map(p => (
+                                <ProjectCard
+                                    key={p.id}
+                                    project={{ ...p, stats: taskStats[p.id] || { inProgress: 0, blocker: 0, done: 0 } }}
+                                    onClick={() => navigate('/project', { state: { projectName: p.name, projectId: p.id } })}
+                                />
+                            ))}
                         </div>
-                    </div>
-                </div>
+                    )}
+                </section>
             </main>
         </div>
     );
