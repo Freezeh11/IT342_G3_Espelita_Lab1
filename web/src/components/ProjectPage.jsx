@@ -49,6 +49,16 @@ const UpdateTaskModal = ({ task, onClose, onUpdate }) => {
     const [description, setDescription] = useState(task.description || '');
     const [status, setStatus] = useState(task.status);
     const [blockerReason, setBlockerReason] = useState(task.blockerReason || '');
+    const [error, setError] = useState('');
+
+    const handleUpdate = () => {
+        if (status === 'blocker' && !blockerReason.trim()) {
+            setError('Blocker reason is required!');
+            return;
+        }
+        onUpdate({ ...task, title: title.trim() || task.title, description, status, blockerReason: status === 'blocker' ? blockerReason : '' });
+        onClose();
+    };
 
     return (
         <div className="project-modal__overlay" onClick={onClose}>
@@ -62,16 +72,17 @@ const UpdateTaskModal = ({ task, onClose, onUpdate }) => {
                 <label className="project-modal__label">Update Status</label>
                 <div className="project-modal__toggle-row">
                     {[['inProgress', 'Progress'], ['blocker', 'Blocker'], ['done', 'Done']].map(([val, label]) => (
-                        <button key={val} className="project-modal__toggle-btn" style={{ border: status === val ? `1px solid ${STATUS_COLORS[val]}` : '1px solid rgba(255,255,255,0.1)', background: status === val ? `${STATUS_COLORS[val]}22` : 'rgba(255,255,255,0.04)', color: status === val ? STATUS_COLORS[val] : '#8a8891' }} onClick={() => setStatus(val)}>{label}</button>
+                        <button key={val} className="project-modal__toggle-btn" style={{ border: status === val ? `1px solid ${STATUS_COLORS[val]}` : '1px solid rgba(255,255,255,0.1)', background: status === val ? `${STATUS_COLORS[val]}22` : 'rgba(255,255,255,0.04)', color: status === val ? STATUS_COLORS[val] : '#8a8891' }} onClick={() => { setStatus(val); setError(''); }}>{label}</button>
                     ))}
                 </div>
                 {status === 'blocker' && (
                     <>
                         <label className="project-modal__label project-modal__label--blocker">Reason for Blocker</label>
-                        <textarea className="project-modal__textarea" style={{ minHeight: '80px', marginBottom: '16px' }} placeholder="Describe what's blocking this task..." value={blockerReason} onChange={e => setBlockerReason(e.target.value)} />
+                        <textarea className={`project-modal__textarea ${error ? 'project-modal__textarea--error' : ''}`} style={{ minHeight: '80px', marginBottom: '4px' }} placeholder="Describe what's blocking this task..." value={blockerReason} onChange={e => { setBlockerReason(e.target.value); setError(''); }} />
+                        {error && <div className="project-modal__error">{error}</div>}
                     </>
                 )}
-                <button className="project-modal__btn-primary" onClick={() => { onUpdate({ ...task, title: title.trim() || task.title, description, status, blockerReason: status === 'blocker' ? blockerReason : '' }); onClose(); }}>Update Task</button>
+                <button className="project-modal__btn-primary" onClick={handleUpdate}>Update Task</button>
                 <button className="project-modal__btn-secondary" onClick={onClose}>Cancel</button>
             </div>
         </div>
@@ -192,10 +203,9 @@ const ReportModal = ({ tasks, onClose }) => {
 };
 
 const TaskCard = ({ task, onEdit, onDelete, onDragStart }) => {
-    const isBlocker = task.status === 'blocker';
     return (
         <article
-            className={`task-card ${isBlocker ? 'task-card--blocker' : ''}`}
+            className={`task-card task-card--${task.status}`}
             draggable
             onDragStart={e => { e.stopPropagation(); onDragStart(task); }}
             onClick={() => onEdit(task)}
@@ -204,7 +214,6 @@ const TaskCard = ({ task, onEdit, onDelete, onDragStart }) => {
                 <button title="Delete" className="task-card__delete" onClick={() => onDelete(task.id)}><TrashIcon /></button>
             </div>
             <div className="task-card__header">
-                <DragHandle />
                 <span className="task-card__title">{task.title}</span>
             </div>
             <div className="task-card__desc">{task.description}</div>
@@ -226,6 +235,7 @@ const ProjectPage = () => {
     const projectId = location.state?.projectId || null;
 
     useEffect(() => {
+        document.title = 'StandUpSync | Project';
         const auth = localStorage.getItem('auth');
         if (!auth) { navigate('/login'); return; }
         getCurrentUser(auth)
@@ -302,12 +312,11 @@ const ProjectPage = () => {
                 <div className="project__logo" onClick={() => navigate('/dashboard')}>StandUp<span className="project__logo-highlight">-Sync</span></div>
                 <div className="project__nav-area">
                     <button className="project__nav-btn" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                        {(() => {
-                            const pic = localStorage.getItem('profilePic'); return pic
-                                ? <img src={pic} alt="avatar" className="project__nav-avatar-img" />
-                                : <div className="project__nav-avatar-circle">{user?.username?.charAt(0).toUpperCase()}</div>;
-                        })()}
-                        {user?.username}
+                        {user?.profilePic
+                            ? <img src={user.profilePic} alt="avatar" className="project__nav-avatar-img" />
+                            : <div className="project__nav-avatar-circle">{(user?.displayName || user?.username)?.charAt(0).toUpperCase()}</div>
+                        }
+                        {user?.displayName || user?.username}
                     </button>
                     <ul className={`project__dropdown ${isDropdownOpen ? 'project__dropdown--visible' : 'project__dropdown--hidden'}`}>
                         <li><button className="project__dropdown-item" onClick={() => navigate('/profile')}>Profile Settings</button></li>
@@ -327,27 +336,32 @@ const ProjectPage = () => {
                 </div>
 
                 <div className="project__board">
-                    {[['inProgress', 'In Progress', 'inProgress'], ['blocker', 'Blockers', 'blockers'], ['done', 'Done', 'done']].map(([status, label, colClass]) => (
-                        <section
-                            key={status}
-                            className="project__column"
-                            style={{
-                                border: dropTarget === status ? `1px solid var(--theme-${colClass}, #9d80ff)55` : '1px solid rgba(255,255,255,0.08)',
-                                background: dropTarget === status ? `var(--theme-${colClass}, #9d80ff)09` : 'rgba(255,255,255,0.03)',
-                            }}
-                            onDragOver={e => { e.preventDefault(); setDropTarget(status); }}
-                            onDragLeave={() => setDropTarget(null)}
-                            onDrop={() => handleColumnDrop(status)}
-                        >
-                            <header className="project__column-header">
-                                <div className={`project__column-dot project__column-dot--${colClass}`}></div>
-                                <h3 className="project__column-label" style={{ margin: 0 }}>{label}</h3>
-                            </header>
-                            {byStatus(status).map(task => (
-                                <TaskCard key={task.id} task={task} onEdit={setSelectedTask} onDelete={handleDeleteTask} onDragStart={handleCardDragStart} />
-                            ))}
-                        </section>
-                    ))}
+                    {[['inProgress', 'In Progress', 'inProgress'], ['blocker', 'Blockers', 'blockers'], ['done', 'Done', 'done']].map(([status, label, colClass]) => {
+                        const COL_COLORS = { inProgress: '#9d80ff', blockers: '#ff5959', done: '#4cff91' };
+                        const colColor = COL_COLORS[colClass];
+                        const isTarget = dropTarget === status;
+                        return (
+                            <section
+                                key={status}
+                                className={`project__column ${isTarget ? 'project__column--drop-target' : ''}`}
+                                style={{
+                                    border: isTarget ? `1px solid ${colColor}` : '1px solid rgba(255,255,255,0.08)',
+                                    background: isTarget ? `${colColor}12` : 'rgba(255,255,255,0.03)',
+                                }}
+                                onDragOver={e => { e.preventDefault(); setDropTarget(status); }}
+                                onDragLeave={() => setDropTarget(null)}
+                                onDrop={() => handleColumnDrop(status)}
+                            >
+                                <header className="project__column-header">
+                                    <div className={`project__column-dot project__column-dot--${colClass}`}></div>
+                                    <h3 className="project__column-label" style={{ margin: 0 }}>{label}</h3>
+                                </header>
+                                {byStatus(status).map(task => (
+                                    <TaskCard key={task.id} task={task} onEdit={setSelectedTask} onDelete={handleDeleteTask} onDragStart={handleCardDragStart} />
+                                ))}
+                            </section>
+                        );
+                    })}
                 </div>
             </main>
         </div>

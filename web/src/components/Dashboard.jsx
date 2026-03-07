@@ -5,6 +5,7 @@ import { getProjects, createProject } from '../services/projectService';
 import { useNavigate } from 'react-router-dom';
 import { CreateProjectModal } from './CreateProjectModal';
 import { ProjectCard } from './ProjectCard';
+import WelcomeModal from './WelcomeModal';
 import '../css/dashboard.css';
 
 const DropdownMenu = ({ isDropdownOpen, navigate, handleLogout }) => (
@@ -21,9 +22,11 @@ const Dashboard = () => {
     const [projects, setProjects] = useState([]);
     const [taskStats, setTaskStats] = useState({});
     const [showCreateProject, setShowCreateProject] = useState(false);
+    const [showWelcome, setShowWelcome] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
+        document.title = 'StandUpSync | Dashboard';
         const auth = localStorage.getItem('auth');
         if (!auth) {
             navigate('/login');
@@ -34,6 +37,7 @@ const Dashboard = () => {
             .then(res => {
                 const u = res.data;
                 setUser(u);
+                if (!u.displayName) setShowWelcome(true);
 
                 getProjects()
                     .then(res => setProjects(res.data))
@@ -89,16 +93,21 @@ const Dashboard = () => {
                     onCreate={handleCreateProject}
                 />
             )}
+            {showWelcome && (
+                <WelcomeModal
+                    auth={localStorage.getItem('auth')}
+                    onComplete={(updatedUser) => { setUser(updatedUser); setShowWelcome(false); }}
+                />
+            )}
             <nav className="dashboard__navbar">
                 <div className="dashboard__logo">StandUp<span className="dashboard__logo-highlight">-Sync</span></div>
                 <div className="dashboard__profile-area">
                     <button className="dashboard__profile-btn" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                        {(() => {
-                            const pic = localStorage.getItem('profilePic'); return pic
-                                ? <img src={pic} alt="avatar" className="dashboard__avatar-img" />
-                                : <div className="dashboard__avatar-circle">{user.username.charAt(0).toUpperCase()}</div>;
-                        })()}
-                        {user.username}
+                        {user.profilePic
+                            ? <img src={user.profilePic} alt="avatar" className="dashboard__avatar-img" />
+                            : <div className="dashboard__avatar-circle">{(user.displayName || user.username).charAt(0).toUpperCase()}</div>
+                        }
+                        {user.displayName || user.username}
                     </button>
                     <DropdownMenu isDropdownOpen={isDropdownOpen} navigate={navigate} handleLogout={handleLogout} />
                 </div>
