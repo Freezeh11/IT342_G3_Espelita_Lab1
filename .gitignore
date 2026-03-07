@@ -10,4 +10,7 @@ backend/.mvn/wrapper/maven-wrapper.jar
 .vscode/
 .idea/
 *.class
+.env
 
+# Temporary folder
+IT342-Espelita-StandUpSync/

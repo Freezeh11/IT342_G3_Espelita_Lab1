@@ -16,6 +16,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState('');
+    const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
@@ -29,7 +30,8 @@ const Login = () => {
             await getCurrentUser(authHeader);
             localStorage.setItem('auth', authHeader);
             localStorage.setItem('user', username);
-            navigate('/dashboard');
+            setSuccess(true);
+            setTimeout(() => navigate('/dashboard'), 1800);
         } catch (err) {
             const status = err.response?.status;
             if (status === 401 || status === 403) {
@@ -51,6 +53,7 @@ const Login = () => {
                 </header>
 
                 {serverError && <div className="auth__alert auth__alert--error" role="alert">{serverError}</div>}
+                {success && <div className="auth__alert auth__alert--success" role="alert">✓ Login successful! Redirecting to dashboard…</div>}
 
                 <form onSubmit={handleLogin} noValidate>
                     <div className="auth__field">

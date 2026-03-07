@@ -11,8 +11,6 @@ export const register = async (username, email, password) => {
 };
 
 export const login = async (username, password) => {
-    // For Basic Auth, we don't necessarily need a post login if we just use the header
-    // But to match the user's flow or if we implemented a real login endpoint:
     return axios.post(API_URL + 'login', {
         username,
         password

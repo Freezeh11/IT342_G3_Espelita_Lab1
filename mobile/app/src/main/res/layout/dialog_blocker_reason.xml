@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Blocker Reason"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Please provide a reason for the blocker:"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/etBlockerReason"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="@drawable/input_background"
+        android:gravity="top|start"
+        android:inputType="textMultiLine"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="12dp"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:hint="What is blocking this task?"
+        android:textColorHint="@color/text_hint"
+        android:layout_marginBottom="20dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnCancelBlocker"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:text="Cancel"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:textAllCaps="false" />
+
+        <Button
+            android:id="@+id/btnConfirmBlocker"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/red_accent"
+            android:text="Mark as Blocker"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textAllCaps="false" />
+    </LinearLayout>
+</LinearLayout>
